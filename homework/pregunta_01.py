@@ -21,71 +21,65 @@ def pregunta_01():
     df = pd.read_csv(
         "files/input/solicitudes_de_credito.csv",
         sep=";",
+        index_col=0,
     )
 
-    df = df.drop(columns=["Unnamed: 0"])
+    df["sexo"] = df["sexo"].str.lower().str.strip()
 
-    columnas_texto = [
-        "sexo",
-        "tipo_de_emprendimiento",
-        "idea_negocio",
-        "barrio",
-        "línea_credito",
-    ]
-
-    for columna in columnas_texto:
-        df[columna] = (
-            df[columna]
-            .str.lower()
-            .str.strip()
-            .str.replace("_", " ", regex=False)
-            .str.replace("-", " ", regex=False)
-            .str.replace(r"\s+", " ", regex=True)
-        )
-
-    df["tipo_de_emprendimiento"] = df["tipo_de_emprendimiento"].fillna(
-        df["tipo_de_emprendimiento"].mode()[0]
+    df["tipo_de_emprendimiento"] = (
+        df["tipo_de_emprendimiento"]
+        .str.lower()
+        .str.strip()
     )
 
-    df["barrio"] = df["barrio"].fillna(
-        df["barrio"].mode()[0]
+    df["idea_negocio"] = (
+        df["idea_negocio"]
+        .str.lower()
+        .str.strip()
+        .str.replace("_", " ", regex=False)
+        .str.replace("-", " ", regex=False)
     )
 
-    df["comuna_ciudadano"] = df["comuna_ciudadano"].replace(
-        {
-            50.0: 5.0,
-            60.0: 6.0,
-            70.0: 7.0,
-            80.0: 8.0,
-            90.0: 9.0,
-        }
+    df["barrio"] = (
+        df["barrio"]
+        .str.lower()
+        .str.replace("_", " ", regex=False)
+        .str.replace("-", " ", regex=False)
     )
 
-    df["línea_credito"] = df["línea_credito"].replace(
-        {
-            "microempresarial": "microempresarial",
-            "empresarial ed.": "empresarial",
-            "empresarial ed": "empresarial",
-            "empresarial ed. ": "empresarial",
-            "empresarial ed ": "empresarial",
-            "empresarial ed": "empresarial",
-            "juridica y cap.semilla": "juridica y cap semilla",
-            "juridica y cap semilla": "juridica y cap semilla",
-            "juridica cap.semilla": "juridica y cap semilla",
-            "juridica cap semilla": "juridica y cap semilla",
-            "soli diaria": "solidaria",
-        }
+    df["línea_credito"] = (
+        df["línea_credito"]
+        .str.lower()
+        .str.strip()
+        .str.replace("_", " ", regex=False)
+        .str.replace("-", " ", regex=False)
     )
 
     df["monto_del_credito"] = (
         df["monto_del_credito"]
-        .astype(str)
-        .str.replace(r"[^0-9]", "", regex=True)
+        .str.replace("$", "", regex=False)
+        .str.replace(",", "", regex=False)
+        .str.replace(".00", "", regex=False)
+        .astype(int)
     )
 
-    df = df[df["estrato"] != 0]
+    df["estrato"] = df["estrato"].astype(int)
+    df["comuna_ciudadano"] = df["comuna_ciudadano"].astype(int)
+
+    df["fecha_de_beneficio"] = pd.to_datetime(
+        df["fecha_de_beneficio"],
+        format="%d/%m/%Y",
+        errors="coerce",
+    ).combine_first(
+        pd.to_datetime(
+            df["fecha_de_beneficio"],
+            format="%Y/%m/%d",
+            errors="coerce",
+        )
+    )
 
     df = df.drop_duplicates()
+    df = df.dropna()
 
     os.makedirs("files/output", exist_ok=True)
 
