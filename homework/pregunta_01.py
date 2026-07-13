@@ -17,7 +17,6 @@ def pregunta_01():
 
     """
 
-def pregunta_01():
     df = pd.read_csv(
         "files/input/solicitudes_de_credito.csv",
         sep=";",
@@ -26,19 +25,18 @@ def pregunta_01():
 
     df["sexo"] = df["sexo"].str.lower().str.strip()
 
-    df["tipo_de_emprendimiento"] = (
-        df["tipo_de_emprendimiento"]
-        .str.lower()
-        .str.strip()
-    )
-
-    df["idea_negocio"] = (
-        df["idea_negocio"]
-        .str.lower()
-        .str.strip()
-        .str.replace("_", " ", regex=False)
-        .str.replace("-", " ", regex=False)
-    )
+    for columna in [
+        "tipo_de_emprendimiento",
+        "idea_negocio",
+        "línea_credito",
+    ]:
+        df[columna] = (
+            df[columna]
+            .str.lower()
+            .str.strip()
+            .str.replace("_", " ", regex=False)
+            .str.replace("-", " ", regex=False)
+        )
 
     df["barrio"] = (
         df["barrio"]
@@ -47,12 +45,22 @@ def pregunta_01():
         .str.replace("-", " ", regex=False)
     )
 
-    df["línea_credito"] = (
-        df["línea_credito"]
-        .str.lower()
-        .str.strip()
-        .str.replace("_", " ", regex=False)
-        .str.replace("-", " ", regex=False)
+    df["estrato"] = df["estrato"].astype(int)
+    df["comuna_ciudadano"] = df["comuna_ciudadano"].astype(int)
+
+    df["fecha_de_beneficio"] = (
+        pd.to_datetime(
+            df["fecha_de_beneficio"],
+            format="%d/%m/%Y",
+            errors="coerce",
+        )
+        .combine_first(
+            pd.to_datetime(
+                df["fecha_de_beneficio"],
+                format="%Y/%m/%d",
+                errors="coerce",
+            )
+        )
     )
 
     df["monto_del_credito"] = (
@@ -60,22 +68,7 @@ def pregunta_01():
         .str.replace("$", "", regex=False)
         .str.replace(",", "", regex=False)
         .str.replace(".00", "", regex=False)
-        .astype(int)
-    )
-
-    df["estrato"] = df["estrato"].astype(int)
-    df["comuna_ciudadano"] = df["comuna_ciudadano"].astype(int)
-
-    df["fecha_de_beneficio"] = pd.to_datetime(
-        df["fecha_de_beneficio"],
-        format="%d/%m/%Y",
-        errors="coerce",
-    ).combine_first(
-        pd.to_datetime(
-            df["fecha_de_beneficio"],
-            format="%Y/%m/%d",
-            errors="coerce",
-        )
+        .str.strip()
     )
 
     df = df.drop_duplicates()
