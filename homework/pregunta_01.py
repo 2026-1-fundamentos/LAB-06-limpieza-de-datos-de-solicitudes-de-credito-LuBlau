@@ -17,6 +17,7 @@ def pregunta_01():
 
     """
 
+def pregunta_01():
     df = pd.read_csv(
         "files/input/solicitudes_de_credito.csv",
         sep=";",
@@ -24,37 +25,67 @@ def pregunta_01():
 
     df = df.drop(columns=["Unnamed: 0"])
 
-    df["sexo"] = df["sexo"].str.lower().str.strip()
+    columnas_texto = [
+        "sexo",
+        "tipo_de_emprendimiento",
+        "idea_negocio",
+        "barrio",
+        "línea_credito",
+    ]
 
-    df["tipo_de_emprendimiento"] = (
-        df["tipo_de_emprendimiento"]
-        .str.lower()
-        .str.strip()
-    )
-
-    df["idea_negocio"] = (
-        df["idea_negocio"]
-        .str.lower()
-        .str.strip()
-        .str.replace("_", " ", regex=False)
-        .str.replace("-", " ", regex=False)
-        .str.replace(r"\s+", " ", regex=True)
-    )
-
-    df["barrio"] = (
-        df["barrio"]
-        .str.lower()
-        .str.strip()
-        .str.replace("_", " ", regex=False)
-        .str.replace("-", " ", regex=False)
-        .str.replace(r"\s+", " ", regex=True)
-    )
+    for columna in columnas_texto:
+        df[columna] = (
+            df[columna]
+            .str.lower()
+            .str.strip()
+            .str.replace("_", " ", regex=False)
+            .str.replace("-", " ", regex=False)
+            .str.replace(r"\s+", " ", regex=True)
+        )
 
     df["tipo_de_emprendimiento"] = df["tipo_de_emprendimiento"].fillna(
         df["tipo_de_emprendimiento"].mode()[0]
     )
 
-    df["barrio"] = df["barrio"].fillna(df["barrio"].mode()[0])
+    df["barrio"] = df["barrio"].fillna(
+        df["barrio"].mode()[0]
+    )
+
+    df["comuna_ciudadano"] = df["comuna_ciudadano"].replace(
+        {
+            50.0: 5.0,
+            60.0: 6.0,
+            70.0: 7.0,
+            80.0: 8.0,
+            90.0: 9.0,
+        }
+    )
+
+    df["línea_credito"] = df["línea_credito"].replace(
+        {
+            "microempresarial": "microempresarial",
+            "empresarial ed.": "empresarial",
+            "empresarial ed": "empresarial",
+            "empresarial ed. ": "empresarial",
+            "empresarial ed ": "empresarial",
+            "empresarial ed": "empresarial",
+            "juridica y cap.semilla": "juridica y cap semilla",
+            "juridica y cap semilla": "juridica y cap semilla",
+            "juridica cap.semilla": "juridica y cap semilla",
+            "juridica cap semilla": "juridica y cap semilla",
+            "soli diaria": "solidaria",
+        }
+    )
+
+    df["monto_del_credito"] = (
+        df["monto_del_credito"]
+        .astype(str)
+        .str.replace(r"[^0-9]", "", regex=True)
+    )
+
+    df = df[df["estrato"] != 0]
+
+    df = df.drop_duplicates()
 
     os.makedirs("files/output", exist_ok=True)
 
